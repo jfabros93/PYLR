@@ -1,16 +1,40 @@
 # Local Development Setup
 
 This walks through running PYLR locally, including wiring up a real Clerk
-application for auth. It assumes Node 22+, pnpm 10+, and PostgreSQL 16
+application for auth. It assumes Node 20+, pnpm 10+, and PostgreSQL 16
 installed locally (or reachable).
 
-## 1. Install dependencies
+## 1. Automated setup (recommended)
+
+`scripts/dev-setup.sh` does the Postgres setup (step 2) and env-file
+scaffolding (steps 3-5) below for you: it creates the `pylr_dev`
+database, creates and passwords the `pylr_app`/`pylr_system` roles, runs
+migrations, writes all three `.env` files, seeds a demo church, and runs
+the RLS test suite to confirm everything actually works. It's
+idempotent — safe to re-run any time (e.g. after pulling new
+migrations).
 
 ```sh
 pnpm install
+bash scripts/dev-setup.sh
 ```
 
-## 2. Set up Postgres
+If you have your Clerk keys ready, it'll prompt you to paste them in
+directly; otherwise it leaves placeholders in `apps/api/.env` and
+`apps/staff-web/.env.local` for you to fill in before step 5.
+
+If your local Postgres doesn't use a `postgres` superuser (common on some
+setups), override it: `PYLR_PG_SUPERUSER=<role> bash scripts/dev-setup.sh`.
+The script explains what it needs if it can't connect.
+
+Skip to [step 3](#3-set-up-a-clerk-application) if you haven't created a
+Clerk application yet, then come back and run the script. Otherwise, skip
+straight to [step 4](#4-start-the-api).
+
+## 2. Manual setup (what the script above does, step by step)
+
+Only need this if you want to understand or customize a step — the
+script above is the normal path.
 
 Create the dev database and the two application roles the RLS model
 depends on (see `docs/ARCHITECTURE.md` and `packages/db/migrations/` for
@@ -67,18 +91,12 @@ pnpm --filter @pylr/db test
    simplest to test with).
 2. In the dashboard, go to **API Keys** and copy the **Publishable key**
    (`pk_test_...`) and **Secret key** (`sk_test_...`).
+3. If you skipped pasting these into the setup script (step 1), fill
+   them in now — `CLERK_SECRET_KEY` in `apps/api/.env`, and
+   `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` + `CLERK_SECRET_KEY` in
+   `apps/staff-web/.env.local`.
 
-## 4. Wire up the API
-
-```sh
-cp apps/api/.env.example apps/api/.env
-```
-
-Fill in:
-- `DATABASE_URL_APP` / `DATABASE_URL_SYSTEM` — same values as
-  `packages/db/.env`.
-- `CLERK_SECRET_KEY` — your real secret key.
-- `CLERK_WEBHOOK_SECRET` — leave as the placeholder for now; see step 7.
+## 4. Start the API
 
 ```sh
 pnpm --filter @pylr/api dev
@@ -87,14 +105,7 @@ pnpm --filter @pylr/api dev
 Confirm it booted: `curl http://localhost:3001/health` should return
 `{"status":"ok",...}`.
 
-## 5. Wire up the staff dashboard
-
-```sh
-cp apps/staff-web/.env.example apps/staff-web/.env.local
-```
-
-Fill in `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` and `CLERK_SECRET_KEY` with
-the same real values, then:
+## 5. Start the staff dashboard
 
 ```sh
 pnpm --filter @pylr/staff-web dev

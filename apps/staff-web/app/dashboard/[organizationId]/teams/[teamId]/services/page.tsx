@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { apiFetch } from "@/lib/api";
-import type { Service } from "@pylr/schemas";
+import type { Resource, Service } from "@pylr/schemas";
 import { createServiceAction } from "./actions";
 
 export default async function ServicesPage({
@@ -9,7 +9,10 @@ export default async function ServicesPage({
   params: Promise<{ organizationId: string; teamId: string }>;
 }) {
   const { organizationId, teamId } = await params;
-  const services = await apiFetch<Service[]>(`/organizations/${organizationId}/teams/${teamId}/services`);
+  const [services, resources] = await Promise.all([
+    apiFetch<Service[]>(`/organizations/${organizationId}/teams/${teamId}/services`),
+    apiFetch<Resource[]>(`/organizations/${organizationId}/resources`),
+  ]);
   const create = createServiceAction.bind(null, organizationId, teamId);
 
   return (
@@ -52,6 +55,17 @@ export default async function ServicesPage({
         </label>
         <label>
           <input name="isPublic" type="checkbox" /> Eligible to promote publicly later (Phase 3)
+        </label>
+        <label>
+          Usual room/resource (optional — each generated occurrence reserves it through the normal booking queue)
+          <select name="defaultResourceId" defaultValue="" style={{ display: "block", width: "100%" }}>
+            <option value="">None</option>
+            {resources.map((r) => (
+              <option key={r.id} value={r.id}>
+                {r.name}
+              </option>
+            ))}
+          </select>
         </label>
         <button type="submit">Create service</button>
       </form>

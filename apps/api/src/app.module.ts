@@ -7,6 +7,7 @@ import { OrganizationsModule } from "./modules/organizations/organizations.modul
 import { TeamsModule } from "./modules/teams/teams.module";
 import { PeopleModule } from "./modules/people/people.module";
 import { SchedulingModule } from "./modules/scheduling/scheduling.module";
+import { BookingModule } from "./modules/booking/booking.module";
 import { HealthController } from "./health.controller";
 
 @Module({
@@ -18,6 +19,7 @@ import { HealthController } from "./health.controller";
     TeamsModule,
     PeopleModule,
     SchedulingModule,
+    BookingModule,
   ],
   controllers: [HealthController],
 })

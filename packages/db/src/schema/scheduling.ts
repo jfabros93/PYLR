@@ -6,13 +6,15 @@ import {
 } from "./enums.js";
 import { organizations } from "./organizations.js";
 import { people, users } from "./people.js";
+import { resources } from "./resources.js";
 import { teams } from "./teams.js";
 
 // Service (the recurring or one-off *concept* of a gathering, owned by a
 // team) -> ServiceOccurrence (one dated instance) -> Plan (the lineup for
-// that instance). Deliberately has no resource/room reference yet —
-// that's `default_resource_id`/`resource_id` from docs/ARCHITECTURE.md,
-// added once the `resources` table exists in Phase 2.
+// that instance). `default_resource_id`/`resource_id` (Phase 2) let a
+// service claim a room; the actual reservation/conflict-check happens
+// through booking_requests (see packages/db/src/schema/booking.ts and
+// ServicesService.generateOccurrences), not here directly.
 export const services = pgTable("services", {
   id: uuid("id").primaryKey().defaultRandom(),
   organizationId: uuid("organization_id")
@@ -32,6 +34,10 @@ export const services = pgTable("services", {
   // the congregant app (Phase 3) — a Sunday service: yes; a leadership
   // prayer meeting: no.
   isPublic: boolean("is_public").notNull().default(false),
+  // The usual room/resource for this service, seeded onto each generated
+  // occurrence's resourceId (nullable — not every service needs a room,
+  // e.g. an online-only gathering).
+  defaultResourceId: uuid("default_resource_id").references(() => resources.id),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
@@ -55,6 +61,10 @@ export const serviceOccurrences = pgTable(
     occursAt: timestamp("occurs_at", { withTimezone: true }).notNull(),
     durationMinutes: integer("duration_minutes").notNull(),
     status: occurrenceStatusEnum("status").notNull().default("scheduled"),
+    // Seeded from services.defaultResourceId at generation time;
+    // independently overridable per-occurrence for the rare week the room
+    // changes. Nullable for the same reason as defaultResourceId.
+    resourceId: uuid("resource_id").references(() => resources.id),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },

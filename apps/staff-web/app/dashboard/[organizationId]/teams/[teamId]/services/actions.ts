@@ -13,6 +13,7 @@ export async function createServiceAction(organizationId: string, teamId: string
       ? Number(formData.get("defaultDurationMinutes"))
       : undefined,
     isPublic: formData.get("isPublic") === "on",
+    defaultResourceId: formData.get("defaultResourceId") || undefined,
   });
   if (!parsed.success) {
     throw new Error(parsed.error.issues.map((i) => i.message).join(", "));

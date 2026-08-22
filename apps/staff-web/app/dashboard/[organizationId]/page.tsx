@@ -25,10 +25,13 @@ export default async function DashboardPage({
         <code>pylr.app/{org.slug}</code>
       </p>
 
-      <nav style={{ display: "flex", gap: "1rem", margin: "1rem 0" }}>
+      <nav style={{ display: "flex", gap: "1rem", margin: "1rem 0", flexWrap: "wrap" }}>
         <Link href={`/dashboard/${organizationId}/teams`}>Teams &amp; Scheduling</Link>
         <Link href={`/dashboard/${organizationId}/me/assignments`}>My Assignments</Link>
         <Link href={`/dashboard/${organizationId}/serving-roles`}>Serving Roles</Link>
+        <Link href={`/dashboard/${organizationId}/resources`}>Resources</Link>
+        <Link href={`/dashboard/${organizationId}/booking-requests`}>Booking Requests</Link>
+        <Link href={`/dashboard/${organizationId}/booking-requests/me`}>My Booking Requests</Link>
       </nav>
 
       <h2>Team</h2>

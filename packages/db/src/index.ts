@@ -9,4 +9,4 @@ export * from "./schema/index.js";
 // classes — TS then rejects passing an @pylr/db query result's columns to
 // a consumer's own `eq`/`and` calls. Routing everything through this one
 // instance avoids that entirely.
-export { and, eq, inArray, or, sql } from "drizzle-orm";
+export { and, eq, gt, inArray, lt, or, sql } from "drizzle-orm";

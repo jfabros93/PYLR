@@ -18,7 +18,7 @@ Full detail: [`docs/ARCHITECTURE.md`](./ARCHITECTURE.md).
 |---|---|---|
 | 0 — Foundation | ✅ Done | Monorepo, multi-tenant Postgres+RLS model, Clerk auth, org/team CRUD. See `packages/db/migrations/000{0,1,2}_*.sql`, `apps/api/src/common/guards/tenant-context.interceptor.ts`. |
 | 1 — Scheduling | ✅ Done | Services → occurrences → plans (speakers, set list, announcements, serving-roles grid). See `packages/db/src/schema/scheduling.ts`, `apps/api/src/modules/scheduling/`. |
-| 2 — Event Planner | ⬜ Not started | Resources, booking requests, exclusion-constraint conflict prevention. **Start here next.** |
+| 2 — Event Planner | ✅ Done | Resources, booking requests, the full approval state machine, and the exclusion-constraint conflict prevention. See `packages/db/src/schema/{resources,booking}.ts`, `packages/db/migrations/0006_booking_rls.sql`, `apps/api/src/modules/booking/`. **Start here next: Phase 3.** |
 | 3 — Public events/ticketing | ⬜ Not started | |
 | 4 — Giving | ⬜ Not started | |
 | 5 — Native mobile | ⬜ Not started | |
@@ -41,12 +41,22 @@ pnpm --filter @pylr/db test   # packages/db/test/rls.test.ts — 9 tests
                                # interaction.
 
 pnpm --filter @pylr/api test  # apps/api/test/scheduling.test.ts — 11 tests
-                               # Proves the whole scheduling flow end-to-end:
-                               # per-team authorization, idempotent
-                               # occurrence generation, the full plan
-                               # builder, self-service assignment
+                               # apps/api/test/booking.test.ts — 17 tests
+                               # scheduling.test.ts proves the whole Phase 1
+                               # flow end-to-end (per-team authorization,
+                               # idempotent occurrence generation, the full
+                               # plan builder, self-service assignment
                                # confirmation, publishing, cross-tenant
-                               # isolation for the new tables.
+                               # isolation). booking.test.ts proves Phase 2:
+                               # the pending/approved/denied/changes_requested
+                               # /cancelled state machine, and — the
+                               # explicitly flagged risk — two concurrent
+                               # approve() calls racing on overlapping
+                               # bookings for the same resource (exactly one
+                               # succeeds, the exclusion constraint rejects
+                               # the other with a 409) plus a same-row
+                               # double-approve race caught by an app-layer
+                               # status guard before ever reaching Postgres.
 ```
 
 Both suites need `DATABASE_URL_APP`/`DATABASE_URL_SYSTEM` set (see
@@ -68,9 +78,16 @@ what you're doing — they were conscious scope cuts, not oversights:
   automatically get a `users` row yet — see "Live local environment"
   below and `docs/LOCAL_DEV.md` step 7 for how to finish this when it's
   needed (needs ngrok or a real deployment with a public URL).
-- **No resource/booking model yet.** `services`/`service_occurrences`
-  have no room/resource reference — that's explicitly deferred to Phase 2
-  (see the comment at the top of `packages/db/src/schema/scheduling.ts`).
+- **Only `team_leader`s can submit a booking request**, not `team_member`s
+  — a deliberate Phase 2 decision to mirror Service/Plan's existing
+  create-restriction, not a technical limitation. Easy to loosen later:
+  it's one `canWithConditions` call in `packages/auth/src/ability.ts`.
+- **`resources.requires_approval` is currently informational only.** Every
+  booking request lands as `pending` and goes through the normal approval
+  queue regardless of this flag — no auto-approve path exists yet, again a
+  deliberate Phase 2 decision (one approval path everywhere, no bypass
+  even for a generated service occurrence's room reservation). See
+  `BookingRequestsService.createBookingRequest`.
 - **People picking in the UI is a plain `<select>`**, not a search/autocomplete
   — fine at demo scale, will need real UX work once an org has more than
   a handful of people.
@@ -106,25 +123,31 @@ machine already has state from before:
   `pnpm --filter @pylr/db seed`) alongside whatever real org the user
   created by clicking through onboarding.
 
-## Next up: Phase 2 — Event Planner
+## Next up: Phase 3 — Public Events, Ticketing, Registration
 
-Internal resource booking so ministries/small groups can request the
-sanctuary or another church-owned space without double-booking it.
-Core pieces per `docs/ARCHITECTURE.md`:
-- `resources` table (bookable spaces/equipment).
-- `booking_requests` with a state machine (`pending → approved/denied`,
-  `changes_requested`, `cancelled`) and a **Postgres exclusion
-  constraint** (`EXCLUDE USING gist`, needs `btree_gist`) on
-  `(resource_id, tstzrange(starts_at, ends_at))` scoped to
-  `status = 'approved'` — this is what makes double-booking structurally
-  impossible at the database layer, the same design principle RLS
-  applied to tenant isolation in Phase 0.
-- Unify service-occurrence room bookings and ad-hoc event bookings
-  through the same table (`related_service_occurrence_id`).
-- The flagged risk to explicitly test: two simultaneous "approve" calls
-  on overlapping bookings for the same resource — prove the exclusion
-  constraint rejects the second one, the same way `rls.test.ts` proved
-  cross-tenant isolation.
+Congregant-facing public events with free/paid ticketing — validates the
+ticketing/inventory model and congregant PWA UX before real money (giving,
+Phase 4) is involved. Core pieces per `docs/ARCHITECTURE.md`:
+- `events` table — congregant-visible; `owning_team_id`,
+  `source_booking_request_id` (when promoted from an approved Phase 2
+  booking — the "promote an approved booking to a public event" workflow
+  is the natural bridge between the two phases), `source_service_occurrence_id`
+  (when promoting "this week's service" publicly, joining through to
+  `plans → plan_speakers` rather than copying data), `visibility`,
+  `status`, `requires_registration`, `is_paid`.
+- `ticket_types`, `orders`, `tickets` — free RSVP reuses the same
+  `orders`/`tickets` path as a paid ticket (a $0 ticket type), not a
+  separate `registrations` table.
+- Inventory safety: `quantity_sold` increment in the same transaction as
+  ticket creation, backstopped by a `CHECK (quantity_sold <= quantity_available)`
+  constraint — no Stripe/payment integration needed yet for the free-RSVP
+  slice of this phase; that's Phase 4.
+- `booking_requests.related_event_id` currently has no FK constraint
+  (see the comment in `packages/db/src/schema/booking.ts`) — add
+  `.references(() => events.id, { onDelete: "set null" })` once `events`
+  exists, as part of this phase's first migration.
+- `apps/congregant-web` is still a placeholder — this is the phase that
+  makes it real.
 
 ## Where everything else lives
 

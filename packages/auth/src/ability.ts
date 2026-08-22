@@ -2,8 +2,8 @@ import { AbilityBuilder, createMongoAbility, subject, type MongoAbility } from "
 import type { OrgRole } from "@pylr/schemas";
 
 // Phase 1+ modules (scheduling, booking, giving, ...) extend this union as
-// their subjects land — e.g. add "BookingRequest" | "Plan" here and a case
-// in defineAbilityFor rather than inventing a parallel permission system.
+// their subjects land — e.g. add a new subject here and a case in
+// defineAbilityFor rather than inventing a parallel permission system.
 export type Actions =
   | "manage"
   | "create"
@@ -23,6 +23,8 @@ export type Subjects =
   | "Plan"
   | "Song"
   | "ServingRole"
+  | "Resource"
+  | "BookingRequest"
   | "all";
 
 export type AppAbility = MongoAbility<[Actions, Subjects]>;
@@ -125,6 +127,20 @@ export function defineAbilityFor(subject: AbilitySubject): AppAbility {
       // org-wide taxonomy, so it stays org_admin-only ("manage all");
       // team_leader only fills the grid in on their own plans.
       can("read", "ServingRole");
+
+      // Event planner (Phase 2): resources are org-wide taxonomy like
+      // ServingRole — org_admin defines them, team_leader only reads them
+      // to pick one when submitting a booking. BookingRequest is
+      // conditioned on requestingTeamId the same way Service/Plan are
+      // conditioned on teamId; "approve" isn't granted here at all — only
+      // org_admin's "manage all" can action a request, so a losing
+      // team_leader can withdraw/resubmit their own (via "update") but
+      // never approve it.
+      can("read", "Resource");
+      can("read", "BookingRequest");
+      canWithConditions(can, ["create", "update"], "BookingRequest", {
+        requestingTeamId: { $in: subject.leaderOfTeamIds },
+      });
       break;
 
     case "team_member":
@@ -136,6 +152,8 @@ export function defineAbilityFor(subject: AbilitySubject): AppAbility {
       can("read", "Plan");
       can("read", "Song");
       can("read", "ServingRole");
+      can("read", "Resource");
+      can("read", "BookingRequest");
       break;
 
     case "congregant":

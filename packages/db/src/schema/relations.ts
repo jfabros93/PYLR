@@ -1,6 +1,8 @@
 import { relations } from "drizzle-orm";
+import { bookingRequests } from "./booking.js";
 import { campuses, organizations } from "./organizations.js";
 import { organizationMembers, people, users } from "./people.js";
+import { resources } from "./resources.js";
 import {
   planAnnouncements,
   planRoleAssignments,
@@ -23,6 +25,8 @@ export const organizationsRelations = relations(organizations, ({ many }) => ({
   services: many(services),
   songs: many(songs),
   servingRoles: many(servingRoles),
+  resources: many(resources),
+  bookingRequests: many(bookingRequests),
 }));
 
 export const campusesRelations = relations(campuses, ({ one }) => ({
@@ -82,6 +86,10 @@ export const servicesRelations = relations(services, ({ one, many }) => ({
   }),
   team: one(teams, { fields: [services.teamId], references: [teams.id] }),
   occurrences: many(serviceOccurrences),
+  defaultResource: one(resources, {
+    fields: [services.defaultResourceId],
+    references: [resources.id],
+  }),
 }));
 
 export const serviceOccurrencesRelations = relations(serviceOccurrences, ({ one }) => ({
@@ -89,6 +97,10 @@ export const serviceOccurrencesRelations = relations(serviceOccurrences, ({ one 
   plan: one(plans, {
     fields: [serviceOccurrences.id],
     references: [plans.serviceOccurrenceId],
+  }),
+  resource: one(resources, {
+    fields: [serviceOccurrences.resourceId],
+    references: [resources.id],
   }),
 }));
 
@@ -149,4 +161,27 @@ export const planRoleAssignmentsRelations = relations(planRoleAssignments, ({ on
     references: [servingRoles.id],
   }),
   person: one(people, { fields: [planRoleAssignments.personId], references: [people.id] }),
+}));
+
+export const resourcesRelations = relations(resources, ({ one, many }) => ({
+  organization: one(organizations, { fields: [resources.organizationId], references: [organizations.id] }),
+  bookingRequests: many(bookingRequests),
+}));
+
+export const bookingRequestsRelations = relations(bookingRequests, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [bookingRequests.organizationId],
+    references: [organizations.id],
+  }),
+  requestingTeam: one(teams, {
+    fields: [bookingRequests.requestingTeamId],
+    references: [teams.id],
+  }),
+  resource: one(resources, { fields: [bookingRequests.resourceId], references: [resources.id] }),
+  relatedServiceOccurrence: one(serviceOccurrences, {
+    fields: [bookingRequests.relatedServiceOccurrenceId],
+    references: [serviceOccurrences.id],
+  }),
+  requestedByUser: one(users, { fields: [bookingRequests.requestedByUserId], references: [users.id] }),
+  reviewedByUser: one(users, { fields: [bookingRequests.reviewedByUserId], references: [users.id] }),
 }));

@@ -13,6 +13,9 @@ export const createServiceSchema = z.object({
     .optional(),
   defaultDurationMinutes: z.number().int().positive().max(1440).default(90),
   isPublic: z.boolean().default(false),
+  // The service's usual room/resource (Phase 2) — seeded onto each
+  // generated occurrence's resourceId. See ServicesService.generateOccurrences.
+  defaultResourceId: z.string().uuid().optional(),
 });
 export type CreateServiceInput = z.infer<typeof createServiceSchema>;
 
@@ -112,6 +115,7 @@ export const serviceSchema = z.object({
   defaultTime: z.string().nullable(),
   defaultDurationMinutes: z.number(),
   isPublic: z.boolean(),
+  defaultResourceId: z.string().uuid().nullable(),
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
 });
@@ -125,6 +129,7 @@ export const serviceOccurrenceSchema = z.object({
   occursAt: z.coerce.date(),
   durationMinutes: z.number(),
   status: z.enum(["scheduled", "cancelled"]),
+  resourceId: z.string().uuid().nullable(),
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
 });

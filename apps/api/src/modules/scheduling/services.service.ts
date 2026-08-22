@@ -4,6 +4,7 @@ import { and, eq, schema } from "@pylr/db";
 import type { Database } from "@pylr/db";
 import type { CreateServiceInput, UpdateServiceInput } from "@pylr/schemas";
 import type { TenantScopedRequest } from "../../common/guards/request.types";
+import { insertPendingBookingRequest } from "../booking/booking-request.util";
 import { computeUpcomingOccurrences } from "./recurrence";
 
 @Injectable()
@@ -114,10 +115,30 @@ export class ServicesService {
           teamId: service.teamId,
           occursAt,
           durationMinutes: service.defaultDurationMinutes,
+          resourceId: service.defaultResourceId,
         })),
       )
       .onConflictDoNothing({ target: [schema.serviceOccurrences.serviceId, schema.serviceOccurrences.occursAt] })
       .returning();
+
+    // A service with a default room claims it through the same
+    // pending-approval queue any ad-hoc booking goes through — no
+    // bypass, even though the requester already has edit rights on the
+    // service (Phase 2 decision: one approval path everywhere).
+    if (service.defaultResourceId) {
+      for (const occurrence of rows) {
+        await insertPendingBookingRequest(tx, {
+          organizationId: tenant.organizationId,
+          requestingTeamId: service.teamId,
+          resourceId: service.defaultResourceId,
+          startsAt: occurrence.occursAt,
+          endsAt: new Date(occurrence.occursAt.getTime() + occurrence.durationMinutes * 60_000),
+          purpose: `${service.name} (recurring)`,
+          relatedServiceOccurrenceId: occurrence.id,
+          requestedByUserId: tenant.userId,
+        });
+      }
+    }
     return rows;
   }
 }

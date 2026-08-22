@@ -32,3 +32,15 @@ export type PlanStatus = (typeof PLAN_STATUSES)[number];
 
 export const ROLE_ASSIGNMENT_STATUSES = ["invited", "confirmed", "declined"] as const;
 export type RoleAssignmentStatus = (typeof ROLE_ASSIGNMENT_STATUSES)[number];
+
+export const RESOURCE_TYPES = ["room", "equipment", "vehicle", "other"] as const;
+export type ResourceType = (typeof RESOURCE_TYPES)[number];
+
+export const BOOKING_REQUEST_STATUSES = [
+  "pending",
+  "approved",
+  "denied",
+  "changes_requested",
+  "cancelled",
+] as const;
+export type BookingRequestStatus = (typeof BOOKING_REQUEST_STATUSES)[number];

@@ -1,6 +1,8 @@
 # AGENTS.md
 
-Guidance for AI coding agents (Cursor, Codex, Claude Code, etc.) working in this repository. See also `docs/ARCHITECTURE.md` (full data model, roadmap) and `docs/LOCAL_DEV.md` (environment/Clerk setup).
+Guidance for AI coding agents (Cursor, Codex, Claude Code, etc.) working in this repository.
+
+**Read [`docs/PROJECT_STATUS.md`](docs/PROJECT_STATUS.md) before doing anything else.** It has the current phase, what's verified vs. just written, known gaps, and this user's live local-environment state (paths, Postgres setup, Clerk keys already in place) — things you can't discover from the code alone. See also `docs/ARCHITECTURE.md` (full data model, roadmap) and `docs/LOCAL_DEV.md` (environment/Clerk setup).
 
 ## What this is
 

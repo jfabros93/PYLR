@@ -35,6 +35,14 @@ export const organizationMemberSchema = z.object({
 });
 export type OrganizationMember = z.infer<typeof organizationMemberSchema>;
 
+export const createPersonSchema = z.object({
+  firstName: z.string().min(1).max(120),
+  lastName: z.string().max(120).optional(),
+  email: z.string().email().optional(),
+  phone: z.string().max(30).optional(),
+});
+export type CreatePersonInput = z.infer<typeof createPersonSchema>;
+
 export const personSchema = z.object({
   id: z.string().uuid(),
   organizationId: z.string().uuid(),

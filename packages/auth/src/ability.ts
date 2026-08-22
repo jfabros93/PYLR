@@ -19,6 +19,10 @@ export type Subjects =
   | "TeamMember"
   | "OrganizationMember"
   | "Person"
+  | "Service"
+  | "Plan"
+  | "Song"
+  | "ServingRole"
   | "all";
 
 export type AppAbility = MongoAbility<[Actions, Subjects]>;
@@ -97,7 +101,30 @@ export function defineAbilityFor(subject: AbilitySubject): AppAbility {
       canWithConditions(can, ["create", "read", "update", "delete"], "TeamMember", {
         teamId: { $in: subject.leaderOfTeamIds },
       });
-      can("read", "Person");
+      // People aren't team-scoped (the same person can serve across
+      // teams), so unlike Service/Plan this stays unconditioned.
+      can(["create", "read"], "Person");
+
+      // Scheduling (Phase 1): a team leader plans their own team's
+      // services. Plan/Service are conditioned on the denormalized
+      // teamId column (see packages/db/src/schema/scheduling.ts) the
+      // same way TeamMember is above; PlanSpeaker/PlanSong/
+      // PlanRoleAssignment etc. don't get their own subjects — they're
+      // always edited through their parent Plan, so the service layer
+      // re-checks "update this Plan" (via canOne) rather than modeling
+      // a subject per sub-resource.
+      can("read", "Service");
+      canWithConditions(can, ["create", "update", "delete"], "Service", {
+        teamId: { $in: subject.leaderOfTeamIds },
+      });
+      can("read", "Plan");
+      canWithConditions(can, ["create", "update"], "Plan", { teamId: { $in: subject.leaderOfTeamIds } });
+      // Songs are a shared org-level library, not team-scoped.
+      can(["create", "read", "update"], "Song");
+      // Defining new serving-role *types* ("Sound Tech", "Greeter") is
+      // org-wide taxonomy, so it stays org_admin-only ("manage all");
+      // team_leader only fills the grid in on their own plans.
+      can("read", "ServingRole");
       break;
 
     case "team_member":
@@ -105,6 +132,10 @@ export function defineAbilityFor(subject: AbilitySubject): AppAbility {
       can("read", "Team");
       can("read", "TeamMember");
       can("read", "Person");
+      can("read", "Service");
+      can("read", "Plan");
+      can("read", "Song");
+      can("read", "ServingRole");
       break;
 
     case "congregant":

@@ -5,6 +5,8 @@ import { DbModule } from "./common/db/db.module";
 import { AuthModule } from "./modules/auth/auth.module";
 import { OrganizationsModule } from "./modules/organizations/organizations.module";
 import { TeamsModule } from "./modules/teams/teams.module";
+import { PeopleModule } from "./modules/people/people.module";
+import { SchedulingModule } from "./modules/scheduling/scheduling.module";
 import { HealthController } from "./health.controller";
 
 @Module({
@@ -14,6 +16,8 @@ import { HealthController } from "./health.controller";
     AuthModule,
     OrganizationsModule,
     TeamsModule,
+    PeopleModule,
+    SchedulingModule,
   ],
   controllers: [HealthController],
 })

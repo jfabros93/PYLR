@@ -23,3 +23,12 @@ export const TEAM_TYPES = [
   "informal",
 ] as const;
 export type TeamType = (typeof TEAM_TYPES)[number];
+
+export const OCCURRENCE_STATUSES = ["scheduled", "cancelled"] as const;
+export type OccurrenceStatus = (typeof OCCURRENCE_STATUSES)[number];
+
+export const PLAN_STATUSES = ["draft", "published"] as const;
+export type PlanStatus = (typeof PLAN_STATUSES)[number];
+
+export const ROLE_ASSIGNMENT_STATUSES = ["invited", "confirmed", "declined"] as const;
+export type RoleAssignmentStatus = (typeof ROLE_ASSIGNMENT_STATUSES)[number];

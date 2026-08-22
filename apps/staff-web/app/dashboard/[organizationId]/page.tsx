@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { apiFetch } from "@/lib/api";
 import type { Organization, OrganizationMember, User } from "@pylr/schemas";
 import { inviteMemberAction } from "./actions";
@@ -23,6 +24,12 @@ export default async function DashboardPage({
       <p>
         <code>pylr.app/{org.slug}</code>
       </p>
+
+      <nav style={{ display: "flex", gap: "1rem", margin: "1rem 0" }}>
+        <Link href={`/dashboard/${organizationId}/teams`}>Teams &amp; Scheduling</Link>
+        <Link href={`/dashboard/${organizationId}/me/assignments`}>My Assignments</Link>
+        <Link href={`/dashboard/${organizationId}/serving-roles`}>Serving Roles</Link>
+      </nav>
 
       <h2>Team</h2>
       <ul>

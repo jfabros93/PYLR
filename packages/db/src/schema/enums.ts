@@ -1,7 +1,10 @@
 import { pgEnum } from "drizzle-orm/pg-core";
 import {
   MEMBER_STATUSES,
+  OCCURRENCE_STATUSES,
   ORG_ROLES,
+  PLAN_STATUSES,
+  ROLE_ASSIGNMENT_STATUSES,
   TEAM_ROLES,
   TEAM_TYPES,
 } from "@pylr/schemas";
@@ -18,3 +21,6 @@ export const stripeConnectStatusEnum = pgEnum("stripe_connect_status", [
   "active",
   "restricted",
 ]);
+export const occurrenceStatusEnum = pgEnum("occurrence_status", OCCURRENCE_STATUSES);
+export const planStatusEnum = pgEnum("plan_status", PLAN_STATUSES);
+export const roleAssignmentStatusEnum = pgEnum("role_assignment_status", ROLE_ASSIGNMENT_STATUSES);

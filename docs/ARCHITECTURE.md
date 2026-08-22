@@ -166,8 +166,8 @@ People 1─0/1 RecurringGivingPlan 1─* Donation
 
 ## Phased Roadmap
 
-0. **Foundation** — monorepo, org/user/people/team tables, auth + RLS + CASL, org onboarding. *Risk: RLS correctness needs automated cross-tenant-leak tests before anything else is trusted.*
-1. **Service/Gathering Scheduling** — full scheduling table set, plan builder UI, "my assignments" view. *Risk: scope recurrence to simple weekly/biweekly patterns first; DST/holiday edge cases are a fast-follow.*
+0. **Foundation** ✅ — monorepo, org/user/people/team tables, auth + RLS + CASL, org onboarding. *Risk: RLS correctness needs automated cross-tenant-leak tests before anything else is trusted — see `packages/db/test/rls.test.ts`.*
+1. **Service/Gathering Scheduling** ✅ — full scheduling table set, plan builder UI, "my assignments" view, RRULE-based occurrence generation (`rrule` package), a minimal People module (added mid-phase — needed to pick assignees in the UI, wasn't scoped in Phase 0). Verified against real Postgres in `apps/api/test/scheduling.test.ts`. *Known simplification: occurrence generation treats `defaultTime` as UTC rather than resolving the org's IANA timezone — see the comment in `apps/api/src/modules/scheduling/recurrence.ts`; a fast-follow, not yet done.*
 2. **Event Planner** — resources, booking requests, exclusion-constraint conflict prevention, unified staff calendar. *Risk: explicitly test concurrent-approval races.*
 3. **Public Events + free ticketing/RSVP** — validate the ticketing/inventory model and congregant PWA UX before money is involved.
 4. **Giving** — Stripe Connect Express onboarding, fee computation, webhook-driven donation/recurring flow, giving statements; extend ticketing to paid events on the same Connect infrastructure. *Risks: Stripe's policies on religious-org accounts (confirm before building), webhook idempotency, async fee reconciliation, recurring-payment dunning UX, ACH deferred to later.*

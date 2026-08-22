@@ -4,7 +4,7 @@ Guidance for AI coding agents (Cursor, Codex, Claude Code, etc.) working in this
 
 ## What this is
 
-PYLR is a multi-tenant Church Management System (CHMS): service/gathering scheduling, an internal event planner with resource-booking approvals, and a congregant-facing app for public events, ticketing, and giving. Only Phase 0 (multi-tenant foundation: auth, orgs, teams) is implemented so far.
+PYLR is a multi-tenant Church Management System (CHMS): service/gathering scheduling, an internal event planner with resource-booking approvals, and a congregant-facing app for public events, ticketing, and giving. Phase 0 (multi-tenant foundation: auth, orgs, teams) and Phase 1 (service/gathering scheduling) are implemented so far.
 
 ## Commands
 
@@ -44,3 +44,12 @@ Clerk verifies sessions (`ClerkAuthGuard` → `packages/auth/src/clerk.ts`), but
 
 ### Verifying tenant isolation
 `packages/db/test/rls.test.ts` runs against a real local Postgres (not mocked) and is the load-bearing proof that cross-tenant access is structurally impossible — including a case that intentionally tries to smuggle a write into another org's rows. Treat this suite as required reading before touching `0001_rls.sql`, and extend it when adding RLS policies for new tables.
+
+### Scheduling (Phase 1) and the coarse/precise ability-check pattern
+`services` → `service_occurrences` → `plans` (with `plan_speakers`/`plan_songs`/`plan_song_assignments`/`plan_announcements`/`plan_role_assignments` hanging off a plan) is the whole scheduling model — see `packages/db/src/schema/scheduling.ts`. `service_occurrences` and `plans` both denormalize `teamId` from their owning `service` (the same reasoning as `team_members.organizationId` in Phase 0: lets RLS-adjacent checks key off a plain column instead of a join).
+
+Every mutating scheduling endpoint follows the same two-layer ability check established by `TeamsService.addTeamMember` in Phase 0: `@CheckAbility(...)` on the route only confirms the caller has *some* rule for that action+subject (CASL ignores conditions when checking a bare subject type, so this passes for any `team_leader`, not just one leading the right team) — the *precise* per-record check happens in the service method via `canOne(tenant.ability, action, subjectType, { teamId })` (see `packages/auth/src/ability.ts`'s `canOne`/`canWithConditions`). Don't skip the service-layer check because the route already has a `@CheckAbility` — that's necessary but never sufficient for a team-scoped action.
+
+`PlanRoleAssignment`/`PlanSongAssignment`/etc. don't get their own CASL subjects — they're always authorized through their parent `Plan` (fetch the plan, check `canOne(..., "update", "Plan", { teamId: plan.teamId })`). The one exception is confirming/declining your own assignment (`PlansService.updateRoleAssignmentStatus`), which also accepts the assignee themself (a `people` row linked to the caller's own `userId`) — see that method for the self-service branch.
+
+Occurrence generation (`apps/api/src/modules/scheduling/recurrence.ts`) uses the `rrule` package against a service's iCal `recurrenceRule` string; it's a documented simplification that treats `defaultTime` as UTC rather than the org's IANA timezone, and only simple weekly/biweekly patterns are exercised by `apps/api/test/scheduling.test.ts`.

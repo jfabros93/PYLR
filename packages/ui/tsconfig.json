@@ -1,0 +1,8 @@
+{
+  "extends": "@pylr/config/tsconfig.nextjs.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src"
+  },
+  "include": ["src"]
+}

@@ -1,0 +1,27 @@
+{
+  "name": "@pylr/congregant-web",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "build": "next build",
+    "dev": "next dev --port 3002",
+    "start": "next start",
+    "lint": "eslint \"app/**/*.{ts,tsx}\"",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@pylr/schemas": "workspace:*",
+    "next": "^16.3.2",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  },
+  "devDependencies": {
+    "@pylr/config": "workspace:*",
+    "@types/node": "^22.10.5",
+    "@types/react": "^19.0.2",
+    "@types/react-dom": "^19.0.2",
+    "eslint": "^10.9.0",
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.67.0"
+  }
+}

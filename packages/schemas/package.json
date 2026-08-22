@@ -1,0 +1,20 @@
+{
+  "name": "@pylr/schemas",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@pylr/config": "workspace:*",
+    "typescript": "^5.7.2"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "name": "@pylr/auth",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@casl/ability": "^7.0.1",
+    "@clerk/backend": "^3.16.10",
+    "@pylr/schemas": "workspace:*"
+  },
+  "devDependencies": {
+    "@pylr/config": "workspace:*",
+    "typescript": "^5.7.2"
+  }
+}

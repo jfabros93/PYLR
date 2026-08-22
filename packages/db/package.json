@@ -1,0 +1,32 @@
+{
+  "name": "@pylr/db",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc",
+    "generate": "drizzle-kit generate",
+    "generate:custom": "drizzle-kit generate --custom",
+    "migrate": "tsx src/migrate.ts",
+    "seed": "tsx src/seed.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@pylr/schemas": "workspace:*",
+    "drizzle-orm": "^0.45.2",
+    "postgres": "^3.4.9"
+  },
+  "devDependencies": {
+    "@pylr/config": "workspace:*",
+    "@types/node": "^22.10.5",
+    "drizzle-kit": "^0.31.10",
+    "dotenv": "^16.4.7",
+    "tsx": "^4.23.12",
+    "typescript": "^5.7.2",
+    "vitest": "^4.1.11"
+  }
+}

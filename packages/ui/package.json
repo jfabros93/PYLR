@@ -1,0 +1,19 @@
+{
+  "name": "@pylr/ui",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0"
+  },
+  "devDependencies": {
+    "@pylr/config": "workspace:*",
+    "@types/react": "^19.0.2",
+    "typescript": "^5.7.2"
+  }
+}

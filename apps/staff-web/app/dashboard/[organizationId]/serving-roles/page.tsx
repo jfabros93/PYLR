@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Button, PageHeader, Table, Td, TextInput, Th } from "@pylr/ui";
 import { apiFetch } from "@/lib/api";
 import type { ServingRole } from "@pylr/schemas";
 import { createServingRoleAction } from "./actions";
@@ -10,26 +10,36 @@ export default async function ServingRolesPage({ params }: { params: Promise<{ o
 
   return (
     <div>
-      <p>
-        <Link href={`/dashboard/${organizationId}`}>← Dashboard</Link>
-      </p>
-      <h1>Serving Roles</h1>
-      <p>
-        <small>
-          The types of roles that can appear in a plan&apos;s serving grid (Sound Tech, Greeter, Worship Leader, …).
-          Org-admin only — team leaders fill these in on individual plans.
-        </small>
-      </p>
-      <ul>
-        {roles.map((r) => (
-          <li key={r.id}>{r.name}</li>
-        ))}
-        {roles.length === 0 && <li>No serving roles yet — create one below.</li>}
-      </ul>
+      <PageHeader
+        eyebrow="Org-admin only — team leaders fill these in on individual plans"
+        title="Serving Roles"
+      />
 
-      <form action={create} style={{ display: "flex", gap: "0.5rem", maxWidth: 360 }}>
-        <input name="name" placeholder="Sound Tech" required />
-        <button type="submit">Add role</button>
+      <Table>
+        <thead>
+          <tr>
+            <Th>Role</Th>
+          </tr>
+        </thead>
+        <tbody>
+          {roles.map((r) => (
+            <tr key={r.id}>
+              <Td>{r.name}</Td>
+            </tr>
+          ))}
+          {roles.length === 0 && (
+            <tr>
+              <Td>No serving roles yet — create one below.</Td>
+            </tr>
+          )}
+        </tbody>
+      </Table>
+
+      <form action={create} style={{ display: "flex", gap: "var(--pylr-space-2)", maxWidth: 360, marginTop: "var(--pylr-space-4)" }}>
+        <TextInput name="name" placeholder="Sound Tech" required />
+        <Button type="submit" variant="primary">
+          Add role
+        </Button>
       </form>
     </div>
   );

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Badge, Button, FormField, Select, TextInput, Textarea } from "@pylr/ui";
 import { apiFetch } from "@/lib/api";
 import type { Person, PlanDetail, Song, ServingRole } from "@pylr/schemas";
 import {
@@ -22,6 +23,17 @@ function personLabel(p: { firstName: string; lastName: string | null } | null) {
   if (!p) return "(open slot)";
   return [p.firstName, p.lastName].filter(Boolean).join(" ");
 }
+
+const sectionStyle = { marginBottom: "var(--pylr-space-6)" };
+const sectionHeadingStyle = { fontSize: "1rem", marginBottom: "var(--pylr-space-3)" };
+const rowStyle = {
+  padding: "var(--pylr-space-2) 0",
+  borderBottom: "1px solid var(--pylr-rule-light)",
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "flex-start",
+  gap: "var(--pylr-space-3)",
+};
 
 export default async function PlanBuilderPage({
   params,
@@ -48,205 +60,250 @@ export default async function PlanBuilderPage({
     createPerson: createPersonAction.bind(null, organizationId, planId),
   };
 
+  const filled = plan.roleAssignments.filter((r) => r.person).length;
+
   return (
     <div>
       <p>
         <Link href={`/dashboard/${organizationId}/teams/${teamId}/services`}>← Services</Link>
       </p>
-      <h1>
-        {new Date(plan.serviceOccurrence.occursAt).toLocaleString(undefined, { dateStyle: "full", timeStyle: "short" })}
-      </h1>
-      <p>
-        {plan.serviceOccurrence.service.name} — <strong>{plan.status}</strong>
-      </p>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-end",
+          gap: "var(--pylr-space-3)",
+          flexWrap: "wrap",
+          marginBottom: "var(--pylr-space-2)",
+        }}
+      >
+        <div>
+          <div style={{ textTransform: "uppercase", fontSize: "0.75rem", color: "var(--pylr-ink-muted)" }}>
+            {plan.serviceOccurrence.service.name}
+          </div>
+          <h1 style={{ fontFamily: "var(--pylr-font-display, inherit)", fontSize: "1.9rem" }}>
+            {new Date(plan.serviceOccurrence.occursAt).toLocaleString(undefined, { dateStyle: "full", timeStyle: "short" })}
+          </h1>
+        </div>
+        <div style={{ display: "flex", gap: "var(--pylr-space-2)", alignItems: "center" }}>
+          <Badge>{plan.status}</Badge>
+          {plan.status === "draft" && (
+            <form action={bound.publish}>
+              <Button type="submit" variant="primary">
+                Publish plan
+              </Button>
+            </form>
+          )}
+        </div>
+      </div>
 
-      <form action={bound.updatePlan} style={{ display: "grid", gap: "0.5rem", maxWidth: 480, marginBottom: "1.5rem" }}>
-        <input name="title" defaultValue={plan.title ?? ""} placeholder="Sermon series title" />
-        <textarea name="notes" defaultValue={plan.notes ?? ""} placeholder="Internal planning notes" rows={3} />
-        <button type="submit">Save</button>
-      </form>
-
-      {plan.status === "draft" && (
-        <form action={bound.publish} style={{ marginBottom: "1.5rem" }}>
-          <button type="submit">Publish plan</button>
-        </form>
-      )}
-
-      {/* --- Speakers --- */}
-      <section style={{ marginBottom: "2rem" }}>
-        <h2>Speakers</h2>
-        <ul>
-          {plan.speakers.map((s) => (
-            <li key={s.id}>
-              {personLabel(s.person)} — {s.roleLabel}
-              {s.sermonTitle && <> · “{s.sermonTitle}”</>}{" "}
-              <form action={removeSpeakerAction.bind(null, organizationId, planId, s.id)} style={{ display: "inline" }}>
-                <button type="submit">Remove</button>
-              </form>
-            </li>
-          ))}
-        </ul>
-        <form action={bound.addSpeaker} style={{ display: "grid", gap: "0.5rem", maxWidth: 420 }}>
-          <select name="personId" defaultValue="">
-            <option value="">— Guest (enter name below) —</option>
-            {people.map((p) => (
-              <option key={p.id} value={p.id}>
-                {personLabel(p)}
-              </option>
-            ))}
-          </select>
-          <input name="guestFirstName" placeholder="Guest first name" />
-          <input name="guestLastName" placeholder="Guest last name" />
-          <input name="roleLabel" defaultValue="Preaching" />
-          <input name="sermonTitle" placeholder="Sermon title" />
-          <button type="submit">Add speaker</button>
-        </form>
-      </section>
-
-      {/* --- Songs --- */}
-      <section style={{ marginBottom: "2rem" }}>
-        <h2>Set list</h2>
-        <ul>
-          {plan.songs.map((ps) => (
-            <li key={ps.id}>
-              <strong>{ps.song.title}</strong>
-              {ps.song.artist && <> — {ps.song.artist}</>}
-              {ps.key && <> ({ps.key})</>}{" "}
-              <form action={removeSongAction.bind(null, organizationId, planId, ps.id)} style={{ display: "inline" }}>
-                <button type="submit">Remove</button>
-              </form>
-              <ul>
-                {ps.assignments.map((a) => (
-                  <li key={a.id}>
-                    {personLabel(a.person)} — {a.instrumentOrRole}
-                  </li>
-                ))}
-              </ul>
-              <form
-                action={assignSongPersonAction.bind(null, organizationId, planId, ps.id)}
-                style={{ display: "flex", gap: "0.5rem", maxWidth: 420 }}
-              >
-                <select name="personId" required>
-                  <option value="">Person…</option>
-                  {people.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {personLabel(p)}
-                    </option>
-                  ))}
-                </select>
-                <input name="instrumentOrRole" placeholder="Acoustic Guitar" required />
-                <button type="submit">Assign</button>
-              </form>
-            </li>
-          ))}
-        </ul>
-        <form action={bound.addSong} style={{ display: "flex", gap: "0.5rem", maxWidth: 420 }}>
-          <select name="songId" required>
-            <option value="">Song…</option>
-            {songs.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.title}
-              </option>
-            ))}
-          </select>
-          <input name="key" placeholder="Key (optional)" style={{ width: 100 }} />
-          <button type="submit">Add to set list</button>
-        </form>
-        <details style={{ marginTop: "0.5rem" }}>
-          <summary>Add a new song to the library</summary>
-          <form action={bound.createSong} style={{ display: "grid", gap: "0.5rem", maxWidth: 360, marginTop: "0.5rem" }}>
-            <input name="title" placeholder="Song title" required />
-            <input name="artist" placeholder="Artist" />
-            <input name="defaultKey" placeholder="Default key" style={{ width: 100 }} />
-            <button type="submit">Add song</button>
+      <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "var(--pylr-space-6)", alignItems: "start" }}>
+        <div>
+          <form action={bound.updatePlan} style={{ display: "grid", gap: "var(--pylr-space-3)", marginBottom: "var(--pylr-space-6)" }}>
+            <FormField label="Title">
+              <TextInput name="title" defaultValue={plan.title ?? ""} placeholder="Sermon series title" />
+            </FormField>
+            <FormField label="Internal notes">
+              <Textarea name="notes" defaultValue={plan.notes ?? ""} rows={3} />
+            </FormField>
+            <div>
+              <Button type="submit">Save</Button>
+            </div>
           </form>
-        </details>
-      </section>
 
-      {/* --- Announcements --- */}
-      <section style={{ marginBottom: "2rem" }}>
-        <h2>Announcements</h2>
-        <ul>
-          {plan.announcements.map((a) => (
-            <li key={a.id}>
-              <strong>{a.title}</strong> — {a.content}
-              {a.assignedPerson && <> ({personLabel(a.assignedPerson)})</>}{" "}
-              <form action={removeAnnouncementAction.bind(null, organizationId, planId, a.id)} style={{ display: "inline" }}>
-                <button type="submit">Remove</button>
-              </form>
-            </li>
-          ))}
-        </ul>
-        <form action={bound.addAnnouncement} style={{ display: "grid", gap: "0.5rem", maxWidth: 420 }}>
-          <input name="title" placeholder="Title" required />
-          <textarea name="content" placeholder="Content" rows={2} required />
-          <select name="assignedPersonId" defaultValue="">
-            <option value="">Unassigned</option>
-            {people.map((p) => (
-              <option key={p.id} value={p.id}>
-                {personLabel(p)}
-              </option>
+          {/* --- Speakers --- */}
+          <section style={sectionStyle}>
+            <h2 style={sectionHeadingStyle}>Speakers</h2>
+            {plan.speakers.map((s) => (
+              <div key={s.id} style={rowStyle}>
+                <div>
+                  <strong>{personLabel(s.person)}</strong> — {s.roleLabel}
+                  {s.sermonTitle && <> · “{s.sermonTitle}”</>}
+                </div>
+                <form action={removeSpeakerAction.bind(null, organizationId, planId, s.id)}>
+                  <Button type="submit">Remove</Button>
+                </form>
+              </div>
             ))}
-          </select>
-          <button type="submit">Add announcement</button>
-        </form>
-      </section>
+            {plan.speakers.length === 0 && <p style={{ color: "var(--pylr-ink-muted)" }}>No speakers yet.</p>}
+            <form action={bound.addSpeaker} style={{ display: "grid", gap: "var(--pylr-space-2)", maxWidth: 420, marginTop: "var(--pylr-space-3)" }}>
+              <Select name="personId" defaultValue="">
+                <option value="">— Guest (enter name below) —</option>
+                {people.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {personLabel(p)}
+                  </option>
+                ))}
+              </Select>
+              <TextInput name="guestFirstName" placeholder="Guest first name" />
+              <TextInput name="guestLastName" placeholder="Guest last name" />
+              <TextInput name="roleLabel" defaultValue="Preaching" />
+              <TextInput name="sermonTitle" placeholder="Sermon title" />
+              <div>
+                <Button type="submit">Add speaker</Button>
+              </div>
+            </form>
+          </section>
 
-      {/* --- Serving-role grid --- */}
-      <section style={{ marginBottom: "2rem" }}>
-        <h2>Serving roles</h2>
-        <ul>
+          {/* --- Songs --- */}
+          <section style={sectionStyle}>
+            <h2 style={sectionHeadingStyle}>Set list</h2>
+            {plan.songs.map((ps) => (
+              <div key={ps.id} style={{ ...rowStyle, flexDirection: "column", alignItems: "stretch" }}>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <div>
+                    <strong>{ps.song.title}</strong>
+                    {ps.song.artist && <> — {ps.song.artist}</>}
+                    {ps.key && <> ({ps.key})</>}
+                  </div>
+                  <form action={removeSongAction.bind(null, organizationId, planId, ps.id)}>
+                    <Button type="submit">Remove</Button>
+                  </form>
+                </div>
+                <ul style={{ margin: "var(--pylr-space-1) 0", paddingLeft: "1.2rem", color: "var(--pylr-ink-muted)", fontSize: "0.9rem" }}>
+                  {ps.assignments.map((a) => (
+                    <li key={a.id}>
+                      {personLabel(a.person)} — {a.instrumentOrRole}
+                    </li>
+                  ))}
+                </ul>
+                <form
+                  action={assignSongPersonAction.bind(null, organizationId, planId, ps.id)}
+                  style={{ display: "flex", gap: "var(--pylr-space-2)", maxWidth: 420 }}
+                >
+                  <Select name="personId" required>
+                    <option value="">Person…</option>
+                    {people.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {personLabel(p)}
+                      </option>
+                    ))}
+                  </Select>
+                  <TextInput name="instrumentOrRole" placeholder="Acoustic Guitar" required />
+                  <Button type="submit">Assign</Button>
+                </form>
+              </div>
+            ))}
+            {plan.songs.length === 0 && <p style={{ color: "var(--pylr-ink-muted)" }}>No songs yet.</p>}
+            <form action={bound.addSong} style={{ display: "flex", gap: "var(--pylr-space-2)", maxWidth: 420, marginTop: "var(--pylr-space-3)" }}>
+              <Select name="songId" required>
+                <option value="">Song…</option>
+                {songs.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.title}
+                  </option>
+                ))}
+              </Select>
+              <TextInput name="key" placeholder="Key" style={{ width: 90 }} />
+              <Button type="submit">Add to set list</Button>
+            </form>
+            <details style={{ marginTop: "var(--pylr-space-2)" }}>
+              <summary style={{ cursor: "pointer", color: "var(--pylr-ink-muted)" }}>Add a new song to the library</summary>
+              <form action={bound.createSong} style={{ display: "grid", gap: "var(--pylr-space-2)", maxWidth: 360, marginTop: "var(--pylr-space-2)" }}>
+                <TextInput name="title" placeholder="Song title" required />
+                <TextInput name="artist" placeholder="Artist" />
+                <TextInput name="defaultKey" placeholder="Default key" style={{ width: 100 }} />
+                <div>
+                  <Button type="submit">Add song</Button>
+                </div>
+              </form>
+            </details>
+          </section>
+
+          {/* --- Announcements --- */}
+          <section style={sectionStyle}>
+            <h2 style={sectionHeadingStyle}>Announcements</h2>
+            {plan.announcements.map((a) => (
+              <div key={a.id} style={rowStyle}>
+                <div>
+                  <strong>{a.title}</strong> — {a.content}
+                  {a.assignedPerson && <> ({personLabel(a.assignedPerson)})</>}
+                </div>
+                <form action={removeAnnouncementAction.bind(null, organizationId, planId, a.id)}>
+                  <Button type="submit">Remove</Button>
+                </form>
+              </div>
+            ))}
+            {plan.announcements.length === 0 && <p style={{ color: "var(--pylr-ink-muted)" }}>No announcements yet.</p>}
+            <form action={bound.addAnnouncement} style={{ display: "grid", gap: "var(--pylr-space-2)", maxWidth: 420, marginTop: "var(--pylr-space-3)" }}>
+              <TextInput name="title" placeholder="Title" required />
+              <Textarea name="content" placeholder="Content" rows={2} required />
+              <Select name="assignedPersonId" defaultValue="">
+                <option value="">Unassigned</option>
+                {people.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {personLabel(p)}
+                  </option>
+                ))}
+              </Select>
+              <div>
+                <Button type="submit">Add announcement</Button>
+              </div>
+            </form>
+          </section>
+
+          <details>
+            <summary style={{ cursor: "pointer", color: "var(--pylr-ink-muted)" }}>Add a new person</summary>
+            <form action={bound.createPerson} style={{ display: "grid", gap: "var(--pylr-space-2)", maxWidth: 360, marginTop: "var(--pylr-space-2)" }}>
+              <TextInput name="firstName" placeholder="First name" required />
+              <TextInput name="lastName" placeholder="Last name" />
+              <TextInput name="email" type="email" placeholder="Email (optional)" />
+              <div>
+                <Button type="submit">Add person</Button>
+              </div>
+            </form>
+          </details>
+        </div>
+
+        {/* --- Serving-role grid (right rail) --- */}
+        <div style={{ border: "var(--pylr-rule-width) solid var(--pylr-rule)", padding: "var(--pylr-space-4)" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "var(--pylr-space-3)" }}>
+            <h2 style={{ fontSize: "1.1rem" }}>Serving roles</h2>
+            <span style={{ fontSize: "0.8rem", color: "var(--pylr-ink-muted)" }}>
+              {filled} of {plan.roleAssignments.length} filled
+            </span>
+          </div>
           {plan.roleAssignments.map((ra) => (
-            <li key={ra.id}>
-              {ra.servingRole.name}: {personLabel(ra.person)} — <strong>{ra.status}</strong>{" "}
-              <form
-                action={updateAssignmentStatusAction.bind(null, organizationId, planId, ra.id, "confirmed")}
-                style={{ display: "inline" }}
-              >
-                <button type="submit">Confirm</button>
-              </form>{" "}
-              <form
-                action={updateAssignmentStatusAction.bind(null, organizationId, planId, ra.id, "declined")}
-                style={{ display: "inline" }}
-              >
-                <button type="submit">Decline</button>
-              </form>{" "}
-              <form action={removeRoleAssignmentAction.bind(null, organizationId, planId, ra.id)} style={{ display: "inline" }}>
-                <button type="submit">Remove</button>
-              </form>
-            </li>
+            <div key={ra.id} style={{ ...rowStyle, flexDirection: "column", alignItems: "stretch", gap: "var(--pylr-space-1)" }}>
+              <div style={{ display: "flex", justifyContent: "space-between" }}>
+                <strong>{ra.servingRole.name}</strong>
+                <Badge>{ra.status}</Badge>
+              </div>
+              <div style={{ fontSize: "0.85rem", color: "var(--pylr-ink-muted)" }}>{personLabel(ra.person)}</div>
+              <div style={{ display: "flex", gap: "var(--pylr-space-2)" }}>
+                <form action={updateAssignmentStatusAction.bind(null, organizationId, planId, ra.id, "confirmed")}>
+                  <Button type="submit">Confirm</Button>
+                </form>
+                <form action={updateAssignmentStatusAction.bind(null, organizationId, planId, ra.id, "declined")}>
+                  <Button type="submit">Decline</Button>
+                </form>
+                <form action={removeRoleAssignmentAction.bind(null, organizationId, planId, ra.id)}>
+                  <Button type="submit">Remove</Button>
+                </form>
+              </div>
+            </div>
           ))}
-        </ul>
-        <form action={bound.addRole} style={{ display: "flex", gap: "0.5rem", maxWidth: 480 }}>
-          <select name="servingRoleId" required>
-            <option value="">Role…</option>
-            {servingRoles.map((r) => (
-              <option key={r.id} value={r.id}>
-                {r.name}
-              </option>
-            ))}
-          </select>
-          <select name="personId">
-            <option value="">Open slot</option>
-            {people.map((p) => (
-              <option key={p.id} value={p.id}>
-                {personLabel(p)}
-              </option>
-            ))}
-          </select>
-          <button type="submit">Assign</button>
-        </form>
-      </section>
-
-      <details>
-        <summary>Add a new person</summary>
-        <form action={bound.createPerson} style={{ display: "grid", gap: "0.5rem", maxWidth: 360, marginTop: "0.5rem" }}>
-          <input name="firstName" placeholder="First name" required />
-          <input name="lastName" placeholder="Last name" />
-          <input name="email" type="email" placeholder="Email (optional)" />
-          <button type="submit">Add person</button>
-        </form>
-      </details>
+          <form action={bound.addRole} style={{ display: "grid", gap: "var(--pylr-space-2)", marginTop: "var(--pylr-space-3)" }}>
+            <Select name="servingRoleId" required>
+              <option value="">Role…</option>
+              {servingRoles.map((r) => (
+                <option key={r.id} value={r.id}>
+                  {r.name}
+                </option>
+              ))}
+            </Select>
+            <Select name="personId">
+              <option value="">Open slot</option>
+              {people.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {personLabel(p)}
+                </option>
+              ))}
+            </Select>
+            <Button type="submit">+ Add serving role</Button>
+          </form>
+        </div>
+      </div>
     </div>
   );
 }

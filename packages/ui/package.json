@@ -9,11 +9,13 @@
     "typecheck": "tsc --noEmit"
   },
   "peerDependencies": {
+    "next": "^16.0.0",
     "react": "^19.0.0"
   },
   "devDependencies": {
     "@pylr/config": "workspace:*",
     "@types/react": "^19.0.2",
+    "next": "^16.3.2",
     "typescript": "^5.7.2"
   }
 }

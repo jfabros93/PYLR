@@ -1,3 +1,5 @@
+// Placeholder landing page — Phase 3/4 (public events, ticketing, giving)
+// builds this out for real. See docs/ARCHITECTURE.md's phased roadmap.
 export default function HomePage() {
   return (
     <main style={{ padding: "var(--pylr-space-6)", maxWidth: 640 }}>

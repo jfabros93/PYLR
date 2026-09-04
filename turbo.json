@@ -1,6 +1,24 @@
 {
   "$schema": "https://turbo.build/schema.json",
   "ui": "tui",
+  // Turborepo 2's default envMode is "strict": only vars listed here (or
+  // per-task in "env") reach a task's process — anything else set at the
+  // shell/CI level is silently stripped. Without this, DATABASE_URL_APP/
+  // DATABASE_URL_SYSTEM (set as GitHub Actions job-level env in
+  // .github/workflows/ci.yml) never reach `vitest run` for @pylr/db#test
+  // or @pylr/api#test, which throw immediately on missing env instead of
+  // an auth error (see the RLS/scheduling/booking test suites' env checks).
+  "globalEnv": [
+    "NODE_ENV",
+    "PORT",
+    "DATABASE_URL",
+    "DATABASE_URL_APP",
+    "DATABASE_URL_SYSTEM",
+    "CLERK_SECRET_KEY",
+    "CLERK_WEBHOOK_SECRET",
+    "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY",
+    "API_URL"
+  ],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],

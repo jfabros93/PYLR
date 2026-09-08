@@ -1,6 +1,8 @@
 import { notFound } from "next/navigation";
 import type { Organization } from "@pylr/schemas";
 
+// Inlined at build time. Production comes from .env.production (Railway);
+// local `next dev` falls back to localhost if .env.local is missing.
 const API_URL = process.env.API_URL ?? "http://localhost:3001";
 
 export default async function ChurchPage({ params }: { params: Promise<{ slug: string }> }) {

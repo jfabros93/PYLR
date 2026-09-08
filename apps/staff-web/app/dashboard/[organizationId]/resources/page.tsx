@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Button, FormField, PageHeader, Select, Table, Td, TextInput, Th } from "@pylr/ui";
 import { apiFetch } from "@/lib/api";
 import type { Resource } from "@pylr/schemas";
 import { createResourceAction } from "./actions";
@@ -10,53 +11,66 @@ export default async function ResourcesPage({ params }: { params: Promise<{ orga
 
   return (
     <div>
-      <p>
-        <Link href={`/dashboard/${organizationId}`}>← Dashboard</Link>
-      </p>
-      <h1>Resources</h1>
-      <p>
-        <small>
-          Bookable spaces and equipment (sanctuary, fellowship hall, the projector). Org-admin only — teams request
-          these through a booking request.
-        </small>
-      </p>
-      <ul>
-        {resources.map((r) => (
-          <li key={r.id}>
-            <Link href={`/dashboard/${organizationId}/resources/${r.id}`}>{r.name}</Link>{" "}
-            <small>
-              ({r.type}
-              {r.capacity ? `, capacity ${r.capacity}` : ""}
-              {r.requiresApproval ? "" : ", no approval required"})
-            </small>
-          </li>
-        ))}
-        {resources.length === 0 && <li>No resources yet — add one below.</li>}
-      </ul>
+      <PageHeader
+        eyebrow="Org-admin only — teams request these through a booking request"
+        title="Resources"
+        actions={<Link href={`/dashboard/${organizationId}/resources/calendar`}>Week calendar →</Link>}
+      />
 
-      <h2>Add a resource</h2>
-      <form action={create} style={{ display: "grid", gap: "0.5rem", maxWidth: 360 }}>
-        <label>
-          Name
-          <input name="name" placeholder="Sanctuary" required style={{ display: "block", width: "100%" }} />
-        </label>
-        <label>
-          Type
-          <select name="type" defaultValue="room" style={{ display: "block", width: "100%" }}>
+      <Table>
+        <thead>
+          <tr>
+            <Th>Name</Th>
+            <Th>Type</Th>
+            <Th>Capacity</Th>
+            <Th>Approval</Th>
+          </tr>
+        </thead>
+        <tbody>
+          {resources.map((r) => (
+            <tr key={r.id}>
+              <Td>
+                <Link href={`/dashboard/${organizationId}/resources/${r.id}`} style={{ fontWeight: 700 }}>
+                  {r.name}
+                </Link>
+              </Td>
+              <Td>{r.type}</Td>
+              <Td>{r.capacity ?? "—"}</Td>
+              <Td>{r.requiresApproval ? "Required" : "Not required"}</Td>
+            </tr>
+          ))}
+          {resources.length === 0 && (
+            <tr>
+              <Td colSpan={4}>No resources yet — add one below.</Td>
+            </tr>
+          )}
+        </tbody>
+      </Table>
+
+      <h2 style={{ fontSize: "1.1rem", margin: "var(--pylr-space-5) 0 var(--pylr-space-3)" }}>Add a resource</h2>
+      <form action={create} style={{ display: "grid", gap: "var(--pylr-space-3)", maxWidth: 360 }}>
+        <FormField label="Name">
+          <TextInput name="name" placeholder="Sanctuary" required />
+        </FormField>
+        <FormField label="Type">
+          <Select name="type" defaultValue="room">
             <option value="room">Room</option>
             <option value="equipment">Equipment</option>
             <option value="vehicle">Vehicle</option>
             <option value="other">Other</option>
-          </select>
-        </label>
-        <label>
-          Capacity (optional)
-          <input name="capacity" type="number" min={1} style={{ display: "block", width: "100%" }} />
-        </label>
-        <label>
+          </Select>
+        </FormField>
+        <FormField label="Capacity (optional)">
+          <TextInput name="capacity" type="number" min={1} />
+        </FormField>
+        <label style={{ display: "flex", alignItems: "center", gap: "var(--pylr-space-2)", fontSize: "0.85rem" }}>
           <input name="requiresApproval" type="checkbox" defaultChecked /> Requires org-admin approval to book
         </label>
-        <button type="submit">Add resource</button>
+        <div>
+          <Button type="submit" variant="primary">
+            Add resource
+          </Button>
+        </div>
       </form>
     </div>
   );

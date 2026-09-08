@@ -96,6 +96,9 @@ importers:
       '@pylr/schemas':
         specifier: workspace:*
         version: link:../../packages/schemas
+      '@pylr/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
       next:
         specifier: ^16.3.2
         version: 16.3.2(@types/node@22.20.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -136,6 +139,9 @@ importers:
       '@pylr/schemas':
         specifier: workspace:*
         version: link:../../packages/schemas
+      '@pylr/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
       next:
         specifier: ^16.3.2
         version: 16.3.2(@types/node@22.20.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -248,6 +254,9 @@ importers:
       '@types/react':
         specifier: ^19.0.2
         version: 19.2.18
+      next:
+        specifier: ^16.3.2
+        version: 16.3.2(@types/node@22.20.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       typescript:
         specifier: ^5.7.2
         version: 5.9.3

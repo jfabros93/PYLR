@@ -1,0 +1,33 @@
+/*
+ * Design tokens for the "Modernist" system (Phase 2.1 design update):
+ * flat surfaces, zero border-radius, one 2px rule width doing all the
+ * structural organizing, red reserved strictly for the primary
+ * action/urgent state. See docs/ARCHITECTURE.md and the mockup this was
+ * built from for the full rationale — these values are the single
+ * source of truth every component in this package reads from.
+ */
+:root {
+  --pylr-bg: #f3f2f2;
+  --pylr-surface: #ffffff;
+  --pylr-ink: #201e1d;
+  --pylr-ink-muted: #6b6866;
+  --pylr-ink-faint: #9c9895;
+  --pylr-red: #ec3013;
+  --pylr-red-ink: #ffffff;
+  --pylr-rule: #201e1d;
+  --pylr-rule-light: #d8d6d4;
+  --pylr-rule-width: 2px;
+
+  --pylr-space-1: 0.25rem;
+  --pylr-space-2: 0.5rem;
+  --pylr-space-3: 0.75rem;
+  --pylr-space-4: 1rem;
+  --pylr-space-5: 1.5rem;
+  --pylr-space-6: 2rem;
+  --pylr-space-8: 3rem;
+
+  --pylr-font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  /* --pylr-font-display is set by each app's root layout to the className
+     next/font/google's Archivo() loader returns, since font loading is
+     per-Next-app — see apps/staff-web/app/layout.tsx. */
+}

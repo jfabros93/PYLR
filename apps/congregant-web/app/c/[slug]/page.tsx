@@ -14,9 +14,9 @@ export default async function ChurchPage({ params }: { params: Promise<{ slug: s
   const org = (await res.json()) as Pick<Organization, "id" | "name" | "slug" | "logoUrl" | "primaryColor">;
 
   return (
-    <main style={{ padding: "2rem" }}>
-      <h1>{org.name}</h1>
-      <p>Public events, Sunday speaker promotion, and giving land here in Phase 3–4.</p>
+    <main style={{ padding: "var(--pylr-space-6)", maxWidth: 640 }}>
+      <h1 style={{ fontFamily: "var(--pylr-font-display)", fontSize: "2rem", marginBottom: "var(--pylr-space-3)" }}>{org.name}</h1>
+      <p style={{ color: "var(--pylr-ink-muted)" }}>Public events, Sunday speaker promotion, and giving land here in Phase 3–4.</p>
     </main>
   );
 }

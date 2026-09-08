@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Badge, Button, PageHeader } from "@pylr/ui";
 import { apiFetch } from "@/lib/api";
 import type { Service, ServiceOccurrence } from "@pylr/schemas";
 import { generateOccurrencesAction } from "./actions";
@@ -20,37 +21,44 @@ export default async function ServiceDetailPage({
       <p>
         <Link href={`/dashboard/${organizationId}/teams/${teamId}/services`}>← Services</Link>
       </p>
-      <h1>{service.name}</h1>
-      {service.recurrenceRule ? (
-        <p>
-          <code>{service.recurrenceRule}</code> at {service.defaultTime}, {service.defaultDurationMinutes} min
-        </p>
-      ) : (
-        <p>No recurrence rule set — this is a one-off service.</p>
-      )}
+      <PageHeader
+        eyebrow={service.recurrenceRule ? `${service.recurrenceRule} at ${service.defaultTime}, ${service.defaultDurationMinutes} min` : "One-off service"}
+        title={service.name}
+        actions={
+          service.recurrenceRule && service.defaultTime ? (
+            <form action={generate}>
+              <Button type="submit" variant="primary">
+                Generate next 8 occurrences
+              </Button>
+            </form>
+          ) : undefined
+        }
+      />
 
-      <h2>Occurrences</h2>
-      <ul>
-        {occurrences.map((o) => (
-          <li key={o.id}>
-            <Link href={`/dashboard/${organizationId}/occurrences/${o.id}/plan`}>
-              {new Date(o.occursAt).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}
-            </Link>{" "}
-            <small>({o.status})</small>
-          </li>
-        ))}
-        {occurrences.length === 0 && <li>No occurrences generated yet.</li>}
-      </ul>
-
-      {service.recurrenceRule && service.defaultTime ? (
-        <form action={generate}>
-          <button type="submit">Generate next 8 occurrences</button>
-        </form>
-      ) : (
-        <p>
-          <small>Set a recurrence rule and default time on the service to generate occurrences.</small>
+      {!service.recurrenceRule && (
+        <p style={{ color: "var(--pylr-ink-muted)", marginBottom: "var(--pylr-space-4)" }}>
+          Set a recurrence rule and default time on the service to generate occurrences.
         </p>
       )}
+
+      <h2 style={{ fontSize: "1.1rem", marginBottom: "var(--pylr-space-3)" }}>Occurrences</h2>
+      {occurrences.map((o) => (
+        <div
+          key={o.id}
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            padding: "var(--pylr-space-2) 0",
+            borderBottom: "1px solid var(--pylr-rule-light)",
+          }}
+        >
+          <Link href={`/dashboard/${organizationId}/occurrences/${o.id}/plan`}>
+            {new Date(o.occursAt).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}
+          </Link>
+          <Badge>{o.status}</Badge>
+        </div>
+      ))}
+      {occurrences.length === 0 && <p style={{ color: "var(--pylr-ink-muted)" }}>No occurrences generated yet.</p>}
     </div>
   );
 }

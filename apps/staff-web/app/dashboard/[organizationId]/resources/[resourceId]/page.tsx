@@ -1,5 +1,7 @@
 import Link from "next/link";
+import { CalendarBlock, PageHeader } from "@pylr/ui";
 import { apiFetch } from "@/lib/api";
+import { bucketByDay, startOfWeek, weekDays } from "@/lib/week-grid";
 import type { BookingRequest, Resource } from "@pylr/schemas";
 
 export default async function ResourceDetailPage({
@@ -8,44 +10,61 @@ export default async function ResourceDetailPage({
   params: Promise<{ organizationId: string; resourceId: string }>;
 }) {
   const { organizationId, resourceId } = await params;
-  const from = new Date();
-  const to = new Date(from.getTime() + 30 * 24 * 60 * 60 * 1000);
+  const weekStart = startOfWeek(new Date());
+  const weekEnd = new Date(weekStart.getTime() + 7 * 24 * 60 * 60 * 1000);
+  const days = weekDays(weekStart);
 
   const [resource, calendar] = await Promise.all([
     apiFetch<Resource>(`/organizations/${organizationId}/resources/${resourceId}`),
     apiFetch<BookingRequest[]>(
-      `/organizations/${organizationId}/resources/${resourceId}/calendar?from=${from.toISOString()}&to=${to.toISOString()}`,
+      `/organizations/${organizationId}/resources/${resourceId}/calendar?from=${weekStart.toISOString()}&to=${weekEnd.toISOString()}`,
     ),
   ]);
+  const byDay = bucketByDay(calendar, weekStart);
 
   return (
     <div>
       <p>
         <Link href={`/dashboard/${organizationId}/resources`}>← Resources</Link>
       </p>
-      <h1>{resource.name}</h1>
-      <p>
-        <small>
-          {resource.type}
-          {resource.capacity ? `, capacity ${resource.capacity}` : ""}
-          {resource.requiresApproval ? ", requires approval" : ", no approval required"}
-        </small>
-      </p>
+      <PageHeader
+        eyebrow={`${resource.type}${resource.capacity ? `, capacity ${resource.capacity}` : ""}${resource.requiresApproval ? "" : ", no approval required"}`}
+        title={resource.name}
+      />
 
-      <h2>Next 30 days</h2>
-      <p>
-        <small>Pending and approved requests for this resource — the same overlap view shown when submitting a booking.</small>
-      </p>
-      <ul>
-        {calendar.map((b) => (
-          <li key={b.id}>
-            {new Date(b.startsAt).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })} –{" "}
-            {new Date(b.endsAt).toLocaleTimeString(undefined, { timeStyle: "short" })} <em>({b.status})</em>
-            {b.purpose ? ` — ${b.purpose}` : ""}
-          </li>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", border: "var(--pylr-rule-width) solid var(--pylr-rule)", borderLeft: "none" }}>
+        {days.map((d, i) => (
+          <div key={i} style={{ borderLeft: "var(--pylr-rule-width) solid var(--pylr-rule)" }}>
+            <div
+              style={{
+                textAlign: "center",
+                padding: "var(--pylr-space-2)",
+                borderBottom: "var(--pylr-rule-width) solid var(--pylr-rule)",
+                fontSize: "0.75rem",
+                fontWeight: 700,
+                textTransform: "uppercase",
+                color: "var(--pylr-ink-muted)",
+              }}
+            >
+              {d.toLocaleDateString(undefined, { weekday: "short", day: "numeric" })}
+            </div>
+            <div style={{ padding: "var(--pylr-space-2)", minHeight: 160 }}>
+              {byDay[i]!.map((b) => (
+                <CalendarBlock
+                  key={b.id}
+                  status={b.status === "approved" ? "approved" : "pending"}
+                  timeLabel={new Date(b.startsAt).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}
+                  title={b.purpose ?? "Booking"}
+                  subtitle={b.status !== "approved" ? b.status : undefined}
+                />
+              ))}
+            </div>
+          </div>
         ))}
-        {calendar.length === 0 && <li>Nothing booked in the next 30 days.</li>}
-      </ul>
+      </div>
+      <p style={{ fontSize: "0.8rem", color: "var(--pylr-ink-muted)", marginTop: "var(--pylr-space-2)" }}>
+        Solid = approved. Hatched = pending — only approved bookings block each other.
+      </p>
     </div>
   );
 }

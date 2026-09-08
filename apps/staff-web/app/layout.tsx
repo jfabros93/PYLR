@@ -23,7 +23,7 @@ export const metadata = {
 // this ever renders).
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <ClerkProvider>
+    <ClerkProvider signInUrl="/sign-in" signUpUrl="/sign-in">
       <html lang="en" className={archivo.variable}>
         <body>{children}</body>
       </html>
